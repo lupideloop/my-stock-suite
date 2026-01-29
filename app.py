@@ -1,6 +1,27 @@
 import streamlit as st
 import pandas as pd
 
+from fpdf import FPDF
+import base64
+
+def create_pdf(title, results_text):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(40, 10, title)
+    pdf.ln(20)
+    pdf.set_font("Arial", "", 12)
+    for line in results_text:
+        pdf.cell(0, 10, line, ln=True)
+    return pdf.output(dest="S").encode("latin-1")
+
+def download_button(object_to_download, download_filename):
+    try:
+        b64 = base64.b64encode(object_to_download).decode()
+    except:
+        b64 = base64.b64encode(object_to_download.encode()).decode()
+    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}" style="text-decoration:none;"><button style="width:100%; padding:10px; background-color:#1c83e1; color:white; border:none; border-radius:5px; cursor:pointer;">📥 Download PDF Report</button></a>'
+
 # --- APP CONFIGURATION ---
 st.set_page_config(page_title="Cinema Stock Suite", layout="wide")
 
@@ -37,8 +58,39 @@ if page == "Postmix":
         col1.metric("Total Litres", f"{total_litres:.2f} L")
         col2.metric("Actual Cost (30%)", f"€{actual_cost:.2f}")
 
+# Prepare the PDF content
+        report_lines = [
+            f"Date: {pd.to_datetime('today').strftime('%Y-%m-%d')}",
+            f"Units Sold: {units}",
+            f"Total Litres: {total_litres:.2f}L",
+            f"Actual Cost (30%): €{actual_cost:.2f}"
+        ]
+        pdf_data = create_pdf("Postmix Stock Report", report_lines)
+        st.markdown(download_button(pdf_data, "Postmix_Report.pdf"), unsafe_allow_html=True)
+
 # --- 2. POPCORN PAGE ---
 elif page == "Popcorn":
+
+# ... (Keep your input fields for s, m, l, b) ...
+    
+    if st.button("Calculate Popcorn"):
+        total_g = (s*35) + (m*93) + (l*168) + (b*300)
+        total_kg = total_g / 1000
+        cost = total_kg * (31.24933 / 25)
+        
+        st.success(f"Total Weight: {total_kg:.3f} kg")
+        st.info(f"Total Cost: €{cost:.2f}")
+
+        # PDF Logic
+        report_lines = [
+            f"Date: {pd.to_datetime('today').strftime('%Y-%m-%d')}",
+            f"Total Weight: {total_kg:.3f} kg",
+            f"Calculated Cost: €{cost:.2f}",
+            "Breakdown (Grams):",
+            f"- Small: {s*35}g, Medium: {m*93}g, Large: {l*168}g, Bucket: {b*300}g"
+        ]
+        pdf_data = create_pdf("Popcorn Stock Report", report_lines)
+        st.markdown(download_button(pdf_data, "Popcorn_Report.pdf"), unsafe_allow_html=True)
     st.header("🍿 Popcorn Calculator")
     cols = st.columns(4)
     s = cols[0].number_input("Small (35g)", min_value=0)
@@ -56,6 +108,24 @@ elif page == "Popcorn":
 
 # --- 3. NACHOS PAGE ---
 elif page == "Nachos":
+
+# ... (Keep your input field for grams) ...
+
+    if st.button("Calculate Nachos"):
+        packets = grams / 425
+        cost = packets * 1.949
+        st.metric("Total Packets", f"{packets:.2f}")
+        st.metric("Total Cost", f"€{cost:.2f}")
+
+        # PDF Logic
+        report_lines = [
+            f"Date: {pd.to_datetime('today').strftime('%Y-%m-%d')}",
+            f"Measured Weight: {grams}g",
+            f"Equivalent Packets: {packets:.2f}",
+            f"Total Cost: €{cost:.2f}"
+        ]
+        pdf_data = create_pdf("Nachos Stock Report", report_lines)
+        st.markdown(download_button(pdf_data, "Nachos_Report.pdf"), unsafe_allow_html=True)
     st.header("🧀 Nachos Calculator")
     grams = st.number_input("Total Measured Weight (Grams)", min_value=0.0)
     
@@ -67,6 +137,24 @@ elif page == "Nachos":
 
 # --- 4. POPCORN OIL CALCULATOR ---
 elif page == "Popcorn Oil":
+
+# ... (Keep your input field for grams) ...
+
+    if st.button("Calculate Oil"):
+        litres = grams / 1000
+        cost = litres * (79.9486 / 20)
+        st.metric("Total Litres", f"{litres:.3f} L")
+        st.metric("Total Cost", f"€{cost:.2f}")
+
+        # PDF Logic
+        report_lines = [
+            f"Date: {pd.to_datetime('today').strftime('%Y-%m-%d')}",
+            f"Measured Weight: {grams}g",
+            f"Converted Volume: {litres:.3f} L",
+            f"Total Cost: €{cost:.2f}"
+        ]
+        pdf_data = create_pdf("Popcorn_Oil_Report", report_lines)
+        st.markdown(download_button(pdf_data, "Popcorn_Oil_Report.pdf"), unsafe_allow_html=True)
     st.header("🧪 Popcorn Oil Calculator")
     st.info("Note: Per your data, 1000g is treated as 1 Litre (density of water).")
     
