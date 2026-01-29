@@ -65,13 +65,27 @@ elif page == "Nachos":
         st.metric("Total Packets", f"{packets:.2f}")
         st.metric("Total Cost", f"€{cost:.2f}")
 
-# --- 4. OIL PAGE ---
-elif page == "Oil":
+# --- 4. POPCORN OIL CALCULATOR ---
+elif page == "Popcorn Oil":
     st.header("🧪 Popcorn Oil Calculator")
-    grams = st.number_input("Total Measured Weight (Grams)", min_value=0.0)
+    st.info("Note: Per your data, 1000g is treated as 1 Litre (density of water).")
     
-    if st.button("Calculate"):
-        litres = grams / 1000 # Density of water rule
-        cost = litres * (OIL_CAN_COST / OIL_CAN_L)
-        st.metric("Total Litres", f"{litres:.3f} L")
-        st.metric("Total Cost", f"€{cost:.2f}")
+    # Input for weight measured during stock take
+    grams = st.number_input("Total Weight Measured (Grams)", min_value=0.0, step=1.0)
+    
+    if st.button("Calculate Oil Cost"):
+        if grams > 0:
+            # 1. Convert grams to litres 
+            total_litres = grams / 1000 
+            
+            # 2. Calculate cost per litre based on €79.9486 for 20L [cite: 30, 31]
+            cost_per_litre = 79.9486 / 20 
+            total_cost = total_litres * cost_per_litre
+            
+            # Display Results
+            st.subheader("Results")
+            col1, col2 = st.columns(2)
+            col1.metric("Calculated Volume", f"{total_litres:.3f} L")
+            col2.metric("Total Stock Cost", f"€{total_cost:.2f}")
+        else:
+            st.warning("Please enter a weight greater than 0.")
